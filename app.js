@@ -4,12 +4,14 @@ const port = 8080;
 const mongoose = require("mongoose");
 const path = require("path");
 const Chat = require("./models/chat.js");
+const methodOverride = require("method-override");
 
 
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, "public")));
+app.use(methodOverride("_method"));
 
 
 //DataBase Creating
@@ -55,8 +57,32 @@ app.post("/chats", (req, res) => {
 
 
 //Read route
-app.get("/")
+app.get("/chats/:id", async (req, res) => {
+    let { id } = req.params;
+    let chat = await Chat.findById(id);
+    res.render("show.ejs", { chat });
+});
 
+//Edit Route
+app.get("/chats/:id/edit", async (req, res) => {
+    let { id } = req.params;
+    let chat = await Chat.findById(id);
+    res.render("edit.ejs", { chat });
+});
+
+app.patch("/chats/:id", async (req, res) => {
+    let { id } = req.params;
+    let { msg } = req.body;
+    await Chat.findByIdAndUpdate(id, { msg: msg }, { runValidators: true, new: true });
+    res.redirect("/chats");
+});
+
+//Delete Route
+app.delete("/chats/:id", async (req, res) => {
+    let { id } = req.params;
+    await Chat.findByIdAndDelete(id);
+    res.redirect("/chats");
+});
 
 // App Set Up
 app.get("/", (req, res) => {
